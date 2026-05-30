@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOŞUCU — Admin: 1453</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;900&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --ground: #1a1a2e;
+    --accent: #00ff88;
+    --danger: #ff3366;
+    --admin: #ffd700;
+    --sky: #0d0d1a;
+    --text: #e0e0ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 50%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 45%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 2.2rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent), 0 0 40px rgba(0,255,136,0.3);
+    margin-bottom: 8px;
+    z-index: 1;
+  }
+
+  .subtitle {
+    font-size: 0.45rem;
+    color: rgba(224,224,255,0.4);
+    letter-spacing: 0.2em;
+    margin-bottom: 20px;
+    z-index: 1;
+  }
+
+  .game-wrapper {
+    position: relative;
+    z-index: 1;
+    border: 2px solid rgba(0,255,136,0.2);
+    border-radius: 4px;
+    box-shadow: 0 0 40px rgba(0,255,136,0.1), inset 0 0 60px rgba(0,0,0,0.5);
+    background: var(--sky);
+    overflow: hidden;
+  }
+
+  canvas { display: block; }
+
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 700px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    z-index: 1;
+  }
+
+  .score-box {
+    font-size: 0.55rem;
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent);
+  }
+
+  .score-val {
+    font-size: 1rem;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .admin-badge {
+    display: none;
+    background: linear-gradient(135deg, #ffd700, #ff8800);
+    color: #000;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    animation: pulse-gold 1s ease-in-out infinite alternate;
+    box-shadow: 0 0 15px rgba(255,215,0,0.6);
+  }
+
+  @keyframes pulse-gold {
+    from { box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    to { box-shadow: 0 0 25px rgba(255,215,0,0.9), 0 0 50px rgba(255,140,0,0.4); }
+  }
+
+  .admin-badge.active { display: block; }
+
+  .controls {
+    font-size: 0.38rem;
+    color: rgba(224,224,255,0.3);
+    margin-top: 14px;
+    text-align: center;
+    letter-spacing: 0.15em;
+    z-index: 1;
+  }
+
+  .admin-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+  }
+
+  .admin-toggle {
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    color: rgba(255,215,0,0.5);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.35rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+
+  .admin-toggle:hover {
+    background: rgba(255,215,0,0.2);
+    color: rgba(255,215,0,0.9);
+    border-color: rgba(255,215,0,0.6);
+  }
+
+  .admin-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .admin-modal.open { display: flex; }
+
+  .admin-box {
+    background: #0d0d1a;
+    border: 2px solid var(--admin);
+    padding: 30px 40px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(255,215,0,0.3);
+  }
+
+  .admin-box h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--admin);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px var(--admin);
+    letter-spacing: 0.2em;
+  }
+
+  .admin-input {
+    background: rgba(255,215,0,0.05);
+    border: 1px solid rgba(255,215,0,0.4);
+    color: var(--admin);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.8rem;
+    padding: 10px 20px;
+    text-align: center;
+    letter-spacing: 0.3em;
+    outline: none;
+    width: 200px;
+  }
+
+  .admin-input:focus { border-color: var(--admin); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+
+  .admin-submit {
+    display: block;
+    margin: 16px auto 0;
+    background: var(--admin);
+    color: #000;
+    border: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    padding: 10px 20px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+
+  .admin-submit:hover { background: #ffe033; box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+
+  .admin-error {
+    color: var(--danger);
+    font-size: 0.4rem;
+    margin-top: 10px;
+    min-height: 16px;
+    text-shadow: 0 0 8px var(--danger);
+  }
+
+  .admin-close {
+    display: block;
+    margin: 12px auto 0;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.4);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.35rem;
+    padding: 6px 14px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+  }
+
+  .admin-close:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.5); }
+
+  .game-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div class="title">KOŞUCU</div>
+<div class="subtitle">RETRO RUNNER v1.453 — SPACE / TAP ile ZIPLa</div>
+
+<div class="game-wrapper">
+  <canvas id="gameCanvas" width="700" height="220"></canvas>
+</div>
+
+<div class="hud">
+  <div class="score-box">
+    PUAN
+    <span class="score-val" id="scoreDisplay">00000</span>
+  </div>
+  <div class="admin-badge" id="adminBadge">⚡ ÖLÜMSÜZ MOD</div>
+  <div class="score-box" style="text-align:right">
+    EN YÜKSEK
+    <span class="score-val" id="hiScoreDisplay">00000</span>
+  </div>
+</div>
+
+<div class="controls">SPACE / YUKARI OK / EKRANA TIK — ZIPLa &nbsp;|&nbsp; ADMIN PANELİ → SAĞ ALT</div>
+
+<div class="admin-modal" id="adminModal">
+  <div class="admin-box">
+    <h2>🔐 ADMİN PANELİ</h2>
+    <input class="admin-input" id="adminInput" type="password" maxlength="10" placeholder="••••" />
+    <div class="admin-error" id="adminError"></div>
+    <button class="admin-submit" onclick="checkAdmin()">GİRİŞ YAP</button>
+    <button class="admin-close" onclick="closeAdmin()">İPTAL</button>
+  </div>
+</div>
+
+<div class="admin-panel">
+  <button class="admin-toggle" onclick="openAdmin()">🔐 ADMİN</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const GROUND_Y = 170;   // zemin çizgisinin y koordinatı
+const GRAVITY = 0.7;
+const JUMP_FORCE = -14;
+
+// Oyuncu boyutu
+const PLAYER_W = 28;
+const PLAYER_H = 36;
+
+// Oyuncu başlangıç pozisyonu — zeminin hemen üstünde
+const PLAYER_START_Y = GROUND_Y - PLAYER_H;  // = 134
+
+let gameState = 'idle';
+let score = 0;
+let hiScore = 0;
+let speed = 5;
+let frameCount = 0;
+let adminMode = false;
+
+const player = {
+  x: 80,
+  y: PLAYER_START_Y,   // DÜZELTME: sabit başlangıç
+  w: PLAYER_W,
+  h: PLAYER_H,
+  vy: 0,
+  grounded: true,
+  jumping: false
+};
+
+let obstacles = [];
+let nextObstacle = 80;
+
+let clouds = [
+  { x: 200, y: 40, w: 60, speed: 0.5 },
+  { x: 500, y: 25, w: 45, speed: 0.3 },
+  { x: 350, y: 55, w: 75, speed: 0.4 }
+];
+
+let groundDots = [];
+for(let i = 0; i < 20; i++) {
+  groundDots.push({ x: Math.random() * 700, size: Math.random() * 2 + 1 });
+}
+
+const C = {
+  player: '#00ff88',
+  playerShade: '#008844',
+  playerEye: '#0d0d1a',
+  obstacle: '#ff3366',
+  obstacleDark: '#991133',
+  cloud: 'rgba(255,255,255,0.06)',
+  cloudBorder: 'rgba(255,255,255,0.08)',
+  groundLine: '#00ff88',
+  ground: '#16213e',
+};
+
+// ---- ÇİZİM FONKSİYONLARI ----
+
+function drawPixelChar(x, y, admin) {
+  const px = Math.floor(x);
+  const py = Math.floor(y);
+
+  // Admin aura
+  if (admin) {
+    const glow = ctx.createRadialGradient(px+14, py+18, 5, px+14, py+18, 35);
+    glow.addColorStop(0, 'rgba(255,215,0,0.25)');
+    glow.addColorStop(1, 'rgba(255,215,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.ellipse(px+14, py+18, 35, 30, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  const col = admin ? '#ffd700' : C.player;
+  const shade = admin ? '#cc9900' : C.playerShade;
+
+  // Bacaklar (animasyonlu)
+  const legOff = player.grounded ? Math.sin(frameCount * 0.25) * 4 : 0;
+  ctx.fillStyle = col;
+  ctx.fillRect(px+6,  py+24, 7, 12 + legOff);
+  ctx.fillRect(px+15, py+24, 7, 12 - legOff);
+
+  // Gövde
+  ctx.fillStyle = col;
+  ctx.fillRect(px+4, py+10, 20, 16);
+  ctx.fillStyle = shade;
+  ctx.fillRect(px+16, py+10, 8, 16);
+
+  // Kafa
+  ctx.fillStyle = col;
+  ctx.fillRect(px+6, py+2, 16, 12);
+
+  // Göz
+  ctx.fillStyle = admin ? '#ff8800' : C.playerEye;
+  ctx.fillRect(px+17, py+5, 4, 4);
+
+  // Ağız
+  ctx.fillStyle = admin ? '#cc6600' : '#0a3322';
+  ctx.fillRect(px+16, py+11, 5, 2);
+
+  // Kollar
+  ctx.fillStyle = col;
+  const armOff = Math.sin(frameCount * 0.25) * 3;
+  ctx.fillRect(px-2,  py+12+armOff, 7, 5);
+  ctx.fillRect(px+23, py+12-armOff, 7, 5);
+
+  // Taç (admin)
+  if (admin) {
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(px+5,  py-3, 18, 5);
+    ctx.fillRect(px+5,  py-6, 3, 4);
+    ctx.fillRect(px+12, py-8, 4, 6);
+    ctx.fillRect(px+20, py-6, 3, 4);
+    ctx.fillStyle = '#ff4400';
+    ctx.fillRect(px+6,  py-5, 2, 2);
+    ctx.fillRect(px+13, py-7, 2, 2);
+    ctx.fillRect(px+21, py-5, 2, 2);
+  }
+}
+
+function drawObstacle(obs) {
+  ctx.fillStyle = C.obstacle;
+  ctx.fillRect(obs.x + obs.w/2 - 5, obs.y, 10, obs.h);
+  ctx.fillStyle = C.obstacleDark;
+  ctx.fillRect(obs.x + obs.w/2 + 2, obs.y, 5, obs.h);
+
+  if (obs.h > 30) {
+    ctx.fillStyle = C.obstacle;
+    ctx.fillRect(obs.x + obs.w/2 - 15, obs.y + 8, 10, 7);
+    ctx.fillRect(obs.x + obs.w/2 - 15, obs.y, 7, 9);
+    ctx.fillRect(obs.x + obs.w/2 + 5, obs.y + 14, 10, 7);
+    ctx.fillRect(obs.x + obs.w/2 + 5, obs.y + 6, 7, 9);
+    ctx.fillStyle = C.obstacleDark;
+    ctx.fillRect(obs.x + obs.w/2 - 5, obs.y+8, 3, 7);
+    ctx.fillRect(obs.x + obs.w/2 + 5, obs.y+14, 3, 7);
+  }
+
+  ctx.fillStyle = '#ff6688';
+  for (let i = 0; i < 3; i++) {
+    ctx.fillRect(obs.x + obs.w/2 - 7 + i*3, obs.y - 4, 2, 5);
+  }
+}
+
+function drawCloud(c) {
+  ctx.fillStyle = C.cloud;
+  const x = c.x, y = c.y, w = c.w;
+  ctx.beginPath();
+  ctx.ellipse(x, y, w/2, 10, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.ellipse(x-w*0.2, y+3, w*0.3, 8, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.ellipse(x+w*0.2, y+3, w*0.35, 8, 0, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawGround() {
+  ctx.fillStyle = C.ground;
+  ctx.fillRect(0, GROUND_Y, 700, 220 - GROUND_Y);
+
+  ctx.fillStyle = C.groundLine;
+  ctx.fillRect(0, GROUND_Y, 700, 2);
+  ctx.fillStyle = 'rgba(0,255,136,0.15)';
+  ctx.fillRect(0, GROUND_Y + 2, 700, 2);
+
+  ctx.fillStyle = 'rgba(0,255,136,0.2)';
+  groundDots.forEach(d => {
+    ctx.fillRect(Math.floor(d.x), GROUND_Y + 6 + Math.random()*2, d.size, d.size);
+  });
+}
+
+function drawSky() {
+  const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  grad.addColorStop(0, '#080810');
+  grad.addColorStop(1, '#111128');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 700, GROUND_Y);
+}
+
+function drawOverlay() {
+  if (gameState === 'idle') {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, 700, 220);
+    ctx.fillStyle = '#00ff88';
+    ctx.font = '11px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#00ff88';
+    ctx.shadowBlur = 15;
+    ctx.fillText('SPACE veya TIK ile BAŞLA', 350, 100);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,255,136,0.4)';
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillText('ENGELLERDEN KAÇIN', 350, 125);
+    ctx.textAlign = 'left';
+  }
+
+  if (gameState === 'dead') {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, 700, 220);
+    ctx.fillStyle = '#ff3366';
+    ctx.font = '14px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ff3366';
+    ctx.shadowBlur = 20;
+    ctx.fillText('ÖLDÜN!', 350, 90);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,51,102,0.7)';
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillText('TEKRAR OYNAMAK İÇİN SPACE / TIK', 350, 115);
+    ctx.fillStyle = adminMode ? '#ffd700' : '#00ff88';
+    ctx.font = '8px "Press Start 2P"';
+    ctx.fillText('PUAN: ' + String(score).padStart(5,'0'), 350, 140);
+    ctx.textAlign = 'left';
+  }
+}
+
+// ---- OYUN MANTIĞI ----
+
+function spawnObstacle() {
+  const h = 25 + Math.random() * 30;
+  obstacles.push({
+    x: 720,
+    y: GROUND_Y - h,   // DÜZELTME: zemine oturacak şekilde
+    w: 30,
+    h: h
+  });
+}
+
+function checkCollision(obs) {
+  const px = player.x + 6;
+  const py = player.y + 2;
+  const pw = 16;
+  const ph = 34;
+  const ox = obs.x + 5;
+  const ow = obs.w - 10;
+  return (px < ox + ow && px + pw > ox && py < obs.y + obs.h && py + ph > obs.y);
+}
+
+function update() {
+  // Sadece running modda oyun mantığı işlenir ama
+  // karakter animasyonu her zaman çalışsın diye frameCount her zaman artar
+  frameCount++;
+
+  if (gameState !== 'running') return;
+
+  score++;
+  speed = 5 + Math.floor(score / 500) * 0.5;
+
+  document.getElementById('scoreDisplay').textContent = String(score).padStart(5,'0');
+  if (score > hiScore) {
+    hiScore = score;
+    document.getElementById('hiScoreDisplay').textContent = String(hiScore).padStart(5,'0');
+  }
+
+  // Fizik
+  player.vy += GRAVITY;
+  player.y += player.vy;
+
+  if (player.y >= PLAYER_START_Y) {
+    player.y = PLAYER_START_Y;
+    player.vy = 0;
+    player.grounded = true;
+    player.jumping = false;
+  } else {
+    player.grounded = false;
+  }
+
+  // Engeller
+  nextObstacle--;
+  if (nextObstacle <= 0) {
+    spawnObstacle();
+    nextObstacle = 80 + Math.random() * 80;
+  }
+
+  obstacles.forEach(o => { o.x -= speed; });
+  obstacles = obstacles.filter(o => o.x > -50);
+
+  if (!adminMode) {
+    for (let obs of obstacles) {
+      if (checkCollision(obs)) {
+        gameState = 'dead';
+        return;
+      }
+    }
+  }
+
+  clouds.forEach(c => { c.x -= c.speed; if (c.x < -100) c.x = 800; });
+  groundDots.forEach(d => { d.x -= speed * 0.4; if (d.x < 0) d.x = 700; });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, 700, 220);
+  drawSky();
+  clouds.forEach(drawCloud);
+  drawGround();
+  obstacles.forEach(drawObstacle);
+
+  // Karakteri her zaman çiz (idle, running, dead fark etmez)
+  drawPixelChar(player.x, player.y, adminMode);
+
+  // Admin kalkan halkası
+  if (adminMode) {
+    const t = Date.now() / 600;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,215,0,' + (0.3 + 0.2*Math.sin(t)) + ')';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.lineDashOffset = -t * 20;
+    ctx.beginPath();
+    ctx.ellipse(player.x + 14, player.y + 18, 28, 24, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawOverlay();
+}
+
+function jump() {
+  if (player.grounded) {
+    player.vy = JUMP_FORCE;
+    player.grounded = false;
+    player.jumping = true;
+  }
+}
+
+function startGame() {
+  score = 0;
+  speed = 5;
+  obstacles = [];
+  nextObstacle = 80;
+  player.y = PLAYER_START_Y;
+  player.vy = 0;
+  player.grounded = true;
+  gameState = 'running';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') {
+    e.preventDefault();
+    if (gameState === 'idle' || gameState === 'dead') startGame();
+    else jump();
+  }
+});
+
+canvas.addEventListener('click', () => {
+  if (gameState === 'idle' || gameState === 'dead') startGame();
+  else jump();
+});
+
+function openAdmin() {
+  document.getElementById('adminModal').classList.add('open');
+  document.getElementById('adminInput').value = '';
+  document.getElementById('adminError').textContent = '';
+  setTimeout(() => document.getElementById('adminInput').focus(), 100);
+}
+
+function closeAdmin() {
+  document.getElementById('adminModal').classList.remove('open');
+}
+
+function checkAdmin() {
+  const val = document.getElementById('adminInput').value;
+  if (val === '1453') {
+    adminMode = true;
+    document.getElementById('adminBadge').classList.add('active');
+    closeAdmin();
+  } else {
+    document.getElementById('adminError').textContent = '❌ YANLIŞ ŞİFRE!';
+    document.getElementById('adminInput').value = '';
+  }
+}
+
+document.getElementById('adminInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAdmin();
+  if (e.key === 'Escape') closeAdmin();
+});
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
